@@ -1,0 +1,7 @@
+/node_modules
+/dist
+/config.js
+/.env
+/.vscode/*
+!/.vscode/extensions.json
+!/.vscode/settings.json

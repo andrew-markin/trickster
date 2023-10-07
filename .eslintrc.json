@@ -1,0 +1,13 @@
+{
+  "root": true,
+  "env": {
+    "node": true
+  },
+  "extends": "standard",
+  "plugins": [
+    "sort-requires-by-path"
+  ],
+  "rules": {
+    "sort-requires-by-path/sort-requires-by-path": 2
+  }
+}
