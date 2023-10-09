@@ -22,7 +22,7 @@ bot.start(async (ctx) => {
       return
     }
     const salt = helpers.randomHex256()
-    await pushContext({ chatId, salt, sequence: 0 })
+    await pushContext({ chatId, salt, sequence: 0, restartDay: null })
     await sendIntroduction({ chatId })
   } catch (err) {
     console.log('Error:', err.message)
@@ -39,6 +39,50 @@ bot.command('stop', async (ctx) => {
     await ctx.reply('👋')
   } finally {
     release()
+  }
+})
+
+/**
+ * Save setting autostart day.
+ * Bot restart poll every week
+ */
+bot.command('setRestartDay', async (ctx) => {
+  try {
+    const chatId = ctx.message.chat.id,
+      context = pullContext(chatId),
+      message = ctx.payload;
+
+    const daySettings = message.match(/^(\w{3}) (\d\d):(\d\d)$/);
+
+    if (daySettings === null) {
+      await ctx.reply('Day must be set by format: «Mon 10:30»')
+      return;
+    }
+
+    let [all, weekDay, hour, min] = daySettings;
+
+    // check send settings
+    if (!['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].includes(weekDay)) {
+      await ctx.reply('Fail week day name. Day must be set by format: «Mon 10:30».')
+      return;
+    }
+
+    if (parseInt(hour) > 23) {
+      await ctx.reply('Fail hour value. Day must be set by format: «Mon 10:30».')
+      return;
+    }
+
+    if (parseInt(min) > 59) {
+      await ctx.reply('Fail minute value. Day must be set by format: «Mon 10:30».')
+      return;
+    }
+
+    context.restartDay = message
+    await pushContext(context)
+
+    await ctx.reply('Settings update')
+  } catch (err) {
+    console.log('Error:', err.message)
   }
 })
 
