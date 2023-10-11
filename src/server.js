@@ -357,7 +357,7 @@ const maybeSendProposals = async () => {
     const hour = now.hour()
     const week = now.clone().startOf('week')
     const contexts = findContexts((context) => {
-      if (context.nextRestart && now > moment(context.nextRestart)) return true
+      if (context.nextRestart) return (now > moment(context.nextRestart))
 
       if ((weekday > 3) || (hour < 12) || (hour > 18)) return false
       if (context.proposal && (week.diff(localMoment(context.proposal.when), 'days') <= 7)) {
