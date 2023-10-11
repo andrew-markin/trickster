@@ -233,6 +233,7 @@ const sendProposal = async (context, when) => {
     const question = template.replace(/{{(.+)}}/, (match, format) => when.format(format))
     const proposal = {
       when: when.format('YYYY-MM-DD'),
+      notified: localMoment().format(),
       question,
       accepts: [],
       rejects: []
@@ -335,6 +336,33 @@ const maybeSendProposals = async () => {
   }
 }
 
+const notifyAboutProposals = async () => {
+  if (helpers.nowIsNight()) return
+  const now = localMoment()
+  const contexts = findContexts((context) => {
+    if (!context.proposal || context.proposal.closed) return false
+    if (now > localMoment(context.proposal.when).add(12, 'hours')) return false
+    if (!context.proposal.notified) return true
+    return now > localMoment(context.proposal.notified).add(10, 'hours')
+  })
+  for (const context of contexts) {
+    const release = await context.mutex.acquire()
+    try {
+      context.proposal.notified = now.format()
+      pushContext(context)
+      const text = helpers.pickRandomItem(strings.proposalNotifications)
+      await bot.telegram.sendMessage(context.chatId, text, {
+        reply_to_message_id: context.proposal.messageId,
+        parse_mode: 'Markdown'
+      })
+    } catch (err) {
+      console.log('Error:', err.message)
+    } finally {
+      release()
+    }
+  }
+}
+
 // Heartbeat
 
 const execHeartbeat = async (later = false) => {
@@ -344,6 +372,7 @@ const execHeartbeat = async (later = false) => {
     await pinUnpinnedProposals()
     await closeObsoleteProposals()
     await maybeSendProposals()
+    await notifyAboutProposals()
   } catch (err) {
     console.log('Error:', err.message)
   } finally {

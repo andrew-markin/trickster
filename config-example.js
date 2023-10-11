@@ -37,6 +37,11 @@ module.exports = {
       '😎 Check your chat history!',
       '😈 Already done!'
     ],
+    proposalNotifications: [
+      '👆 Make your choice!',
+      '👆 Please do not forget about the poll!',
+      '👆 Please vote!'
+    ],
     accept: '👍 Accept',
     reject: '👎 Reject',
     withGuest: '✌️ Will bring guest',
