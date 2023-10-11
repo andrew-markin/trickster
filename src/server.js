@@ -101,14 +101,16 @@ bot.on('callback_query', async (ctx) => {
     }
     const accepts = new Map(proposal.accepts || [])
     const rejects = new Map(proposal.rejects || [])
+    const withGuests = new Set(proposal.withGuests || [])
     const userId = from.id
     const userTitle = getUserTitle(from)
     let modified = false
     let confirmation
     switch (data) {
       case 'accept':
-        if (!accepts.has(userId)) {
+        if (!accepts.has(userId) || withGuests.has(userId)) {
           accepts.set(userId, userTitle)
+          withGuests.delete(userId)
           rejects.delete(userId)
           confirmation = helpers.pickRandomItem(strings.acceptConfirmations)
           modified = true
@@ -118,7 +120,17 @@ bot.on('callback_query', async (ctx) => {
         if (!rejects.has(userId)) {
           rejects.set(userId, userTitle)
           accepts.delete(userId)
+          withGuests.delete(userId)
           confirmation = helpers.pickRandomItem(strings.rejectConfirmations)
+          modified = true
+        }
+        break
+      case 'with-guest':
+        if (!withGuests.has(userId)) {
+          accepts.set(userId, userTitle)
+          rejects.delete(userId)
+          withGuests.add(userId)
+          confirmation = helpers.pickRandomItem(strings.acceptConfirmations)
           modified = true
         }
         break
@@ -126,6 +138,7 @@ bot.on('callback_query', async (ctx) => {
     if (modified) {
       proposal.accepts = Array.from(accepts)
       proposal.rejects = Array.from(rejects)
+      proposal.withGuests = Array.from(withGuests)
       pushContext(context)
       const { text, extra } = getProposalMessage(context)
       await bot.telegram.editMessageCaption(context.chatId, messageId, undefined, text, extra)
@@ -160,14 +173,18 @@ const getUserTitle = (user) => {
 const getProposalMessage = ({ proposal }) => {
   const accepts = helpers.shuffleItems(proposal.accepts || [], proposal.messageId)
   const rejects = helpers.shuffleItems(proposal.rejects || [], proposal.messageId)
+  const withGuests = new Set(proposal.withGuests || [])
   const getUserList = (items) => {
-    return items.map(([id, title]) => `• [${title}](tg://user?id=${id})`)
+    return items.map(([id, title]) => {
+      return `• [${title}${withGuests.has(id) ? ' +1' : ''}](tg://user?id=${id})`
+    })
   }
   const lines = [proposal.question]
-  if (accepts.length >= config.quorumSize) {
+  const acceptsTotal = accepts.length + withGuests.size
+  if (acceptsTotal >= config.quorumSize) {
     lines.push(
       '',
-      `${strings.accepts} (${accepts.length}):`,
+      `${strings.accepts} (${acceptsTotal}):`,
       ...getUserList(accepts)
     )
     if (rejects.length > 0) {
@@ -180,7 +197,7 @@ const getProposalMessage = ({ proposal }) => {
   } else {
     lines.push(
       '',
-      `${strings.accepts}: ${accepts.length}`,
+      `${strings.accepts}: ${acceptsTotal}`,
       `${strings.rejects}: ${rejects.length}`
     )
   }
@@ -188,10 +205,12 @@ const getProposalMessage = ({ proposal }) => {
     text: lines.join('\n'),
     extra: {
       parse_mode: 'Markdown',
-      ...!proposal.closed && Markup.inlineKeyboard([
+      ...!proposal.closed && Markup.inlineKeyboard([[
         Markup.button.callback(strings.accept, 'accept'),
         Markup.button.callback(strings.reject, 'reject')
-      ])
+      ], [
+        Markup.button.callback(strings.withGuest, 'with-guest')
+      ]])
     }
   }
 }
