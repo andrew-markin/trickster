@@ -39,6 +39,7 @@ module.exports = {
     ],
     accept: '👍 Accept',
     reject: '👎 Reject',
+    withGuest: '✌️ Will bring guest',
     accepts: 'Accepts',
     rejects: 'Rejects',
     acceptConfirmations: [
