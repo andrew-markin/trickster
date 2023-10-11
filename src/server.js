@@ -56,7 +56,7 @@ bot.command('setRestartDay', async (ctx) => {
     const daySettings = message.match(/^(.+) (\d\d):(\d\d)$/)
 
     if (daySettings === null) {
-      await ctx.reply('Дата должна быть в формате: «Пн 10:30»')
+      await ctx.reply(strings.dayMustBe)
       return
     }
 
@@ -68,17 +68,17 @@ bot.command('setRestartDay', async (ctx) => {
 
     // check send settings
     if (!moment.weekdaysShort().includes(weekDay)) {
-      await ctx.reply('Неверное значение дня недели. Дата должна быть в формате: «Пн 10:30»')
+      await ctx.reply(strings.errorFailWeekDayFormat + '. ' + strings.dayMustBe)
       return
     }
 
     if (hour > 23) {
-      await ctx.reply('Неверное значение часа. Дата должна быть в формате: «Пн 10:30»')
+      await ctx.reply(strings.errorFailHourFormat + '. ' + strings.dayMustBe)
       return
     }
 
     if (min > 59) {
-      await ctx.reply('Неверное значение минут. Дата должна быть в формате: «Пн 10:30»')
+      await ctx.reply(strings.errorFailMinuteFormat + '. ' + strings.dayMustBe)
       return
     }
 
@@ -96,7 +96,8 @@ bot.command('setRestartDay', async (ctx) => {
     context.nextRestart = needTime.format('YYYY-MM-DD HH:mm')
     await pushContext(context)
 
-    await ctx.reply('Следущий перезапуск ' + needTime.format('DD MMM в HH:mm'))
+    const successMessage = strings.nextRestartMessage.replace(/{{(.+)}}/, (match, format) => needTime.format(format))
+    await ctx.reply(successMessage)
   } catch (err) {
     console.log('Error:', err.message)
   }

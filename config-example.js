@@ -54,7 +54,12 @@ module.exports = {
       '⏳ Maybe you\'ll change your mind...',
       '🙄 Well, okay...',
       '😔 It\'s a pity...'
-    ]
+    ],
+    dayMustBe: 'Day must be set by format: «Mon 10:30»',
+    errorFailWeekDayFormat: 'Fail week day name',
+    errorFailHourFormat: 'Fail hour value',
+    errorFailMinuteFormat: 'Fail minute value',
+    nextRestartMessage: 'Next restart {{D MMMM at HH:mm}} '
   },
   animations: [
     'https://media.tenor.com/_QsyK0soR0QAAAAC/dogville-booze.gif',
