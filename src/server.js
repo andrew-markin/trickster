@@ -1,6 +1,7 @@
 const { strings, animations, ...config } = require('../config')
 const { localMoment, ...helpers } = require('./helpers')
 const { loadContexts, pushContext, pullContext, findContexts, deleteContext } = require('./storage')
+const moment = require('moment')
 const { Telegraf, Markup } = require('telegraf')
 
 const HEARTBEAT_DELAY_MIN = 1000 * 60 * 5 // 5 minutes
@@ -22,7 +23,7 @@ bot.start(async (ctx) => {
       return
     }
     const salt = helpers.randomHex256()
-    await pushContext({ chatId, salt, sequence: 0, restartDay: null })
+    await pushContext({ chatId, salt, sequence: 0, nextRestart: null })
     await sendIntroduction({ chatId })
   } catch (err) {
     console.log('Error:', err.message)
@@ -48,39 +49,54 @@ bot.command('stop', async (ctx) => {
  */
 bot.command('setRestartDay', async (ctx) => {
   try {
-    const chatId = ctx.message.chat.id,
-      context = pullContext(chatId),
-      message = ctx.payload;
+    const chatId = ctx.message.chat.id
+    const context = pullContext(chatId)
+    const message = ctx.payload
 
-    const daySettings = message.match(/^(\w{3}) (\d\d):(\d\d)$/);
+    const daySettings = message.match(/^(.+) (\d\d):(\d\d)$/)
 
     if (daySettings === null) {
-      await ctx.reply('Day must be set by format: «Mon 10:30»')
-      return;
+      await ctx.reply('Дата должна быть в формате: «Пн 10:30»')
+      return
     }
 
-    let [all, weekDay, hour, min] = daySettings;
+    let [, weekDay, hour, min] = daySettings
+
+    weekDay = weekDay.toLowerCase()
+    hour = parseInt(hour)
+    min = parseInt(min)
 
     // check send settings
-    if (!['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].includes(weekDay)) {
-      await ctx.reply('Fail week day name. Day must be set by format: «Mon 10:30».')
-      return;
+    if (!moment.weekdaysShort().includes(weekDay)) {
+      await ctx.reply('Неверное значение дня недели. Дата должна быть в формате: «Пн 10:30»')
+      return
     }
 
-    if (parseInt(hour) > 23) {
-      await ctx.reply('Fail hour value. Day must be set by format: «Mon 10:30».')
-      return;
+    if (hour > 23) {
+      await ctx.reply('Неверное значение часа. Дата должна быть в формате: «Пн 10:30»')
+      return
     }
 
-    if (parseInt(min) > 59) {
-      await ctx.reply('Fail minute value. Day must be set by format: «Mon 10:30».')
-      return;
+    if (min > 59) {
+      await ctx.reply('Неверное значение минут. Дата должна быть в формате: «Пн 10:30»')
+      return
     }
 
-    context.restartDay = message
+    const needTime = localMoment()
+
+    needTime.isoWeekday(moment.weekdaysMin()
+      .indexOf(weekDay))
+      .hour(hour)
+      .minute(min)
+
+    if (localMoment() > needTime) {
+      needTime.add(7, 'day')
+    }
+
+    context.nextRestart = needTime.format('YYYY-MM-DD HH:mm')
     await pushContext(context)
 
-    await ctx.reply('Settings update')
+    await ctx.reply('Следущий перезапуск ' + needTime.format('DD MMM в HH:mm'))
   } catch (err) {
     console.log('Error:', err.message)
   }
