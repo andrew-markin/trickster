@@ -55,7 +55,7 @@ module.exports = {
       '🙄 Well, okay...',
       '😔 It\'s a pity...'
     ],
-    dayMustBe: 'Day must be set by format: «Mon 10:30»',
+    dayMustBe: 'Day must be set by format:',
     errorFailWeekDayFormat: 'Fail week day name',
     errorFailHourFormat: 'Fail hour value',
     errorFailMinuteFormat: 'Fail minute value',

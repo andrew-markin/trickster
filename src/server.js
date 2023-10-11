@@ -54,9 +54,11 @@ bot.command('setRestartDay', async (ctx) => {
     const message = ctx.payload
 
     const daySettings = message.match(/^(.+) (\d\d):(\d\d)$/)
+    const timeExample = localMoment().weekday(1).hour(10).minute(15)
+    const dayMustBeMessage = strings.dayMustBe + timeExample.format(' «ddd HH:mm»')
 
     if (daySettings === null) {
-      await ctx.reply(strings.dayMustBe)
+      await ctx.reply(dayMustBeMessage)
       return
     }
 
@@ -68,26 +70,23 @@ bot.command('setRestartDay', async (ctx) => {
 
     // check send settings
     if (!moment.weekdaysShort().includes(weekDay)) {
-      await ctx.reply(strings.errorFailWeekDayFormat + '. ' + strings.dayMustBe)
+      await ctx.reply(strings.errorFailWeekDayFormat + '. ' + dayMustBeMessage)
       return
     }
 
     if (hour > 23) {
-      await ctx.reply(strings.errorFailHourFormat + '. ' + strings.dayMustBe)
+      await ctx.reply(strings.errorFailHourFormat + '. ' + dayMustBeMessage)
       return
     }
 
     if (min > 59) {
-      await ctx.reply(strings.errorFailMinuteFormat + '. ' + strings.dayMustBe)
+      await ctx.reply(strings.errorFailMinuteFormat + '. ' + dayMustBeMessage)
       return
     }
 
     const needTime = localMoment()
 
-    needTime.isoWeekday(moment.weekdaysMin()
-      .indexOf(weekDay))
-      .hour(hour)
-      .minute(min)
+    needTime.weekday(moment.weekdaysMin().indexOf(weekDay)).hour(hour).minute(min)
 
     if (localMoment() > needTime) {
       needTime.add(7, 'day')
