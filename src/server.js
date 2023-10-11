@@ -53,8 +53,8 @@ bot.command('setRestartDay', async (ctx) => {
     const context = pullContext(chatId)
     const message = ctx.payload
 
-    const daySettings = message.match(/^(.+) (\d\d):(\d\d)$/)
-    const timeExample = localMoment().weekday(1).hour(10).minute(15)
+    const daySettings = message.match(/^(.+) (\d{1,2}):(\d\d)$/)
+    const timeExample = localMoment().weekday(0).hour(10).minute(15)
     const dayMustBeMessage = strings.dayMustBe + timeExample.format(' «ddd HH:mm»')
 
     if (daySettings === null) {
@@ -68,8 +68,10 @@ bot.command('setRestartDay', async (ctx) => {
     hour = parseInt(hour)
     min = parseInt(min)
 
+    const weekdaysShort = moment.weekdaysShort().map((day) => day.toLowerCase())
+
     // check send settings
-    if (!moment.weekdaysShort().includes(weekDay)) {
+    if (!weekdaysShort.includes(weekDay)) {
       await ctx.reply(strings.errorFailWeekDayFormat + '. ' + dayMustBeMessage)
       return
     }
@@ -86,7 +88,7 @@ bot.command('setRestartDay', async (ctx) => {
 
     const needTime = localMoment()
 
-    needTime.weekday(moment.weekdaysMin().indexOf(weekDay)).hour(hour).minute(min)
+    needTime.isoWeekday(weekDay).hour(hour).minute(min)
 
     if (localMoment() > needTime) {
       needTime.add(7, 'day')
