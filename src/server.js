@@ -104,6 +104,20 @@ bot.command('setRestartDay', async (ctx) => {
   }
 })
 
+bot.command('clearRestartDay', async (ctx) => {
+  try {
+    const chatId = ctx.message.chat.id
+    const context = pullContext(chatId)
+
+    context.nextRestart = null
+    await pushContext(context)
+
+    await ctx.reply(strings.clearRestartMessage)
+  } catch (err) {
+    console.log('Error:', err.message)
+  }
+})
+
 bot.on('migrate_to_chat_id', async ({ message }) => {
   const oldChatId = message.chat.id
   const oldContext = pullContext(oldChatId)
