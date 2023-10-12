@@ -60,7 +60,13 @@ module.exports = {
       '⏳ Maybe you\'ll change your mind...',
       '🙄 Well, okay...',
       '😔 It\'s a pity...'
-    ]
+    ],
+    dayMustBe: 'Day must be set by format:',
+    errorFailWeekDayFormat: 'Fail week day name',
+    errorFailHourFormat: 'Fail hour value',
+    errorFailMinuteFormat: 'Fail minute value',
+    nextRestartMessage: 'Next restart {{D MMMM at HH:mm}}',
+    clearRestartMessage: 'Restart poll in random time from monday to wednesday'
   },
   animations: [
     'https://media.tenor.com/_QsyK0soR0QAAAAC/dogville-booze.gif',

@@ -26,4 +26,9 @@ Create a *config.js* file in the project root (config-example.js can be used as 
 
 ## License
 
+## Support commands
+/start - Start the bot
+/setRestartDay - Set fixed date-time to restart poll
+/clearRestartDay - Clear fixed date-time to restart poll. Use random day and time between Mon-Wed
+
 This repository is available under the [GNU General Public License](./LICENSE).

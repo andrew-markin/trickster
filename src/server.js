@@ -1,6 +1,7 @@
 const { strings, animations, ...config } = require('../config')
 const { localMoment, ...helpers } = require('./helpers')
 const { loadContexts, pushContext, pullContext, findContexts, deleteContext } = require('./storage')
+const moment = require('moment')
 const { Telegraf, Markup } = require('telegraf')
 
 const HEARTBEAT_DELAY_MIN = 1000 * 60 * 5 // 5 minutes
@@ -22,7 +23,7 @@ bot.start(async (ctx) => {
       return
     }
     const salt = helpers.randomHex256()
-    await pushContext({ chatId, salt, sequence: 0 })
+    await pushContext({ chatId, salt, sequence: 0, nextRestart: null })
     await sendIntroduction({ chatId })
   } catch (err) {
     console.log('Error:', err.message)
@@ -39,6 +40,81 @@ bot.command('stop', async (ctx) => {
     await ctx.reply('👋')
   } finally {
     release()
+  }
+})
+
+/**
+ * Save setting autostart day.
+ * Bot restart poll every week
+ */
+bot.command('setRestartDay', async (ctx) => {
+  try {
+    const chatId = ctx.message.chat.id
+    const context = pullContext(chatId)
+    const message = ctx.payload
+
+    const daySettings = message.match(/^(.+) (\d{1,2}):(\d\d)$/)
+    const timeExample = localMoment().weekday(0).hour(10).minute(15)
+    const dayMustBeMessage = strings.dayMustBe + timeExample.format(' «ddd HH:mm»')
+
+    if (daySettings === null) {
+      await ctx.reply(dayMustBeMessage)
+      return
+    }
+
+    let [, weekDay, hour, min] = daySettings
+
+    weekDay = weekDay.toLowerCase()
+    hour = parseInt(hour)
+    min = parseInt(min)
+
+    const weekdaysShort = moment.weekdaysShort().map((day) => day.toLowerCase())
+
+    // check send settings
+    if (!weekdaysShort.includes(weekDay)) {
+      await ctx.reply(strings.errorFailWeekDayFormat + '. ' + dayMustBeMessage)
+      return
+    }
+
+    if (hour > 23) {
+      await ctx.reply(strings.errorFailHourFormat + '. ' + dayMustBeMessage)
+      return
+    }
+
+    if (min > 59) {
+      await ctx.reply(strings.errorFailMinuteFormat + '. ' + dayMustBeMessage)
+      return
+    }
+
+    const needTime = localMoment()
+
+    needTime.isoWeekday(weekDay).hour(hour).minute(min)
+
+    if (localMoment() > needTime) {
+      needTime.add(7, 'day')
+    }
+
+    context.nextRestart = needTime.format('YYYY-MM-DD HH:mm')
+    await pushContext(context)
+
+    const successMessage = strings.nextRestartMessage.replace(/{{(.+)}}/, (match, format) => needTime.format(format))
+    await ctx.reply(successMessage)
+  } catch (err) {
+    console.log('Error:', err.message)
+  }
+})
+
+bot.command('clearRestartDay', async (ctx) => {
+  try {
+    const chatId = ctx.message.chat.id
+    const context = pullContext(chatId)
+
+    context.nextRestart = null
+    await pushContext(context)
+
+    await ctx.reply(strings.clearRestartMessage)
+  } catch (err) {
+    console.log('Error:', err.message)
   }
 })
 
@@ -248,6 +324,10 @@ const sendProposal = async (context, when) => {
     proposal.messageId = result.message_id
     context.proposal = proposal
     context.sequence = sequence
+    if (context.nextRestart && localMoment().add(7, 'days') > moment(context.nextRestart)) {
+      context.nextRestart = moment(context.nextRestart).add(7, 'days').format('YYYY-MM-DD HH:mm')
+    }
+
     pushContext(context)
   } catch (err) {
     console.log('Error:', err.message)
@@ -292,6 +372,7 @@ const closeObsoleteProposals = async () => {
   const now = localMoment()
   const contexts = findContexts((context) => {
     if (!context?.proposal) return false
+    if (context.nextRestart && now > moment(context.nextRestart)) return true
     return now > localMoment(context.proposal.when).add(22, 'h')
   })
   for (const context of contexts) {
@@ -309,9 +390,11 @@ const maybeSendProposals = async () => {
     const now = localMoment()
     const weekday = now.isoWeekday()
     const hour = now.hour()
-    if ((weekday > 3) || (hour < 12) || (hour > 18)) return
     const week = now.clone().startOf('week')
     const contexts = findContexts((context) => {
+      if (context.nextRestart) return (now > moment(context.nextRestart))
+
+      if ((weekday > 3) || (hour < 12) || (hour > 18)) return false
       if (context.proposal && (week.diff(localMoment(context.proposal.when), 'days') <= 7)) {
         return false
       }
