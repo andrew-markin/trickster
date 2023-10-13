@@ -22,7 +22,7 @@ bot.start(async (ctx) => {
       return
     }
     const salt = helpers.randomHex256()
-    await pushContext({ chatId, salt, sequence: 0 })
+    pushContext({ chatId, salt, sequence: 0 })
     await sendIntroduction({ chatId })
   } catch (err) {
     console.log('Error:', err.message)
@@ -176,28 +176,30 @@ const getProposalMessage = ({ proposal }) => {
   const withGuests = new Set(proposal.withGuests || [])
   const getUserList = (items) => {
     return items.map(([id, title]) => {
-      return `• [${title}${withGuests.has(id) ? ' +1' : ''}](tg://user?id=${id})`
+      return `• [${title}](tg://user?id=${id})${withGuests.has(id) ? ' +1' : ''}`
     })
   }
   const lines = [proposal.question]
   const acceptsTotal = accepts.length + withGuests.size
+  const acceptsCaptionSuffix = withGuests.size > 0 ? ` (${accepts.length} + ${withGuests.size})` : ''
+  const acceptsCaption = `${acceptsTotal}${acceptsCaptionSuffix}`
   if (acceptsTotal >= config.quorumSize) {
     lines.push(
       '',
-      `${strings.accepts} (${acceptsTotal}):`,
+      `${strings.accepts}: ${acceptsCaption}`,
       ...getUserList(accepts)
     )
     if (rejects.length > 0) {
       lines.push(
         '',
-        `${strings.rejects} (${rejects.length}):`,
+        `${strings.rejects}: ${rejects.length}`,
         ...getUserList(rejects)
       )
     }
   } else {
     lines.push(
       '',
-      `${strings.accepts}: ${acceptsTotal}`,
+      `${strings.accepts}: ${acceptsCaption}`,
       `${strings.rejects}: ${rejects.length}`
     )
   }
@@ -395,7 +397,7 @@ const start = async () => {
     bot.launch()
     execHeartbeat(true)
   } catch (err) {
-    console.log(`Error: ${err.message}`)
+    console.log('Error:', err.message)
     return process.exit(1)
   }
 }
@@ -407,7 +409,7 @@ const shutdown = async () => {
     bot.stop()
     process.exit()
   } catch (err) {
-    console.log(`Error: ${err.message}`)
+    console.log('Error:', err.message)
     return process.exit(1)
   }
 }
