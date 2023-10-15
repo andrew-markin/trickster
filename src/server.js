@@ -306,38 +306,6 @@ const closeObsoleteProposals = async () => {
   }
 }
 
-const maybeSendProposals = async () => {
-  try {
-    const now = localMoment()
-    const weekday = now.isoWeekday()
-    const hour = now.hour()
-    if ((weekday > 3) || (hour < 12) || (hour > 18)) return
-    const week = now.clone().startOf('week')
-    const contexts = findContexts((context) => {
-      if (context.proposal && (week.diff(localMoment(context.proposal.when), 'days') <= 7)) {
-        return false
-      }
-      const nonce = helpers.getSha256(context.salt, week.format('YYYY-MM-DD'))
-      const day = parseInt(nonce.substring(0, 4), 16) % 3
-      const minute = parseInt(nonce.substring(4, 8), 16) % 300
-      const schedule = week.clone().add(day, 'days').add(720 + minute, 'minutes')
-      return now > schedule
-    })
-    const when = week.clone().add(4, 'days').add(12, 'hours') // Next friday
-    for (const context of contexts) {
-      const release = await context.mutex.acquire()
-      try {
-        await sendProposal(context, when)
-        console.log(`Automatic proposal created for chat ${context.chatId}`)
-      } finally {
-        release()
-      }
-    }
-  } catch (err) {
-    console.log('Error:', err.message)
-  }
-}
-
 const notifyAboutProposals = async () => {
   if (helpers.nowIsNight()) return
   const now = localMoment()
@@ -365,6 +333,44 @@ const notifyAboutProposals = async () => {
   }
 }
 
+const maybeSendProposals = async () => {
+  try {
+    const now = localMoment()
+    const weekday = now.isoWeekday()
+    const hour = now.hour()
+    if ((weekday > 2) || (hour < 12) || (hour > 18)) return
+    const week = now.clone().startOf('week')
+    const contexts = findContexts((context) => {
+      if (context.proposal) {
+        // If the last proposal reached the quorum, then the next automatic proposal
+        // should be delayed for three weeks, otherwise only for two weeks
+        const quorumReached = (context.proposal.accepts || []).length +
+                              (context.proposal.withGuests || []).length >= config.quorumSize
+        if (week.diff(localMoment(context.proposal.when), 'days') <= quorumReached ? 14 : 7) {
+          return false
+        }
+      }
+      const nonce = helpers.getSha256(context.salt, week.format('YYYY-MM-DD'))
+      const day = parseInt(nonce.substring(0, 4), 16) % 2
+      const minute = parseInt(nonce.substring(4, 8), 16) % 300
+      const schedule = week.clone().add(day, 'days').add(720 + minute, 'minutes')
+      return now > schedule
+    })
+    const when = week.clone().add(4, 'days').add(12, 'hours') // Next friday
+    for (const context of contexts) {
+      const release = await context.mutex.acquire()
+      try {
+        await sendProposal(context, when)
+        console.log(`Automatic proposal created for chat ${context.chatId}`)
+      } finally {
+        release()
+      }
+    }
+  } catch (err) {
+    console.log('Error:', err.message)
+  }
+}
+
 // Heartbeat
 
 const execHeartbeat = async (later = false) => {
@@ -373,8 +379,8 @@ const execHeartbeat = async (later = false) => {
     if (later) return
     await pinUnpinnedProposals()
     await closeObsoleteProposals()
-    await maybeSendProposals()
     await notifyAboutProposals()
+    await maybeSendProposals()
   } catch (err) {
     console.log('Error:', err.message)
   } finally {
