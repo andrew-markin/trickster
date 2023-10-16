@@ -91,10 +91,10 @@ bot.command('setRestartDay', async (ctx) => {
     needTime.isoWeekday(weekDay).hour(hour).minute(min)
 
     if (localMoment() > needTime) {
-      needTime.add(7, 'day')
+      needTime.add(7, 'days')
     }
 
-    context.nextRestart = needTime.format('YYYY-MM-DD HH:mm')
+    context.nextRestart = needTime.format()
     await pushContext(context)
 
     const successMessage = strings.nextRestartMessage.replace(/{{(.+)}}/, (match, format) => needTime.format(format))
