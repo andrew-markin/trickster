@@ -313,8 +313,8 @@ const sendProposal = async (context, when) => {
     proposal.messageId = result.message_id
     context.proposal = proposal
     context.sequence = sequence
-    if (context.nextRestart && localMoment().add(7, 'days') > moment(context.nextRestart)) {
-      context.nextRestart = moment(context.nextRestart).add(7, 'days').format('YYYY-MM-DD HH:mm')
+    if (context.nextRestart && localMoment().add(7, 'days') > localMoment(context.nextRestart)) {
+      context.nextRestart = localMoment(context.nextRestart).add(7, 'days').format('YYYY-MM-DD HH:mm')
     }
 
     pushContext(context)
@@ -361,7 +361,7 @@ const closeObsoleteProposals = async () => {
   const now = localMoment()
   const contexts = findContexts((context) => {
     if (!context?.proposal) return false
-    if (context.nextRestart && now > moment(context.nextRestart)) return true
+    if (context.nextRestart && now > localMoment(context.nextRestart)) return true
     return now > localMoment(context.proposal.when).add(22, 'h')
   })
   for (const context of contexts) {
@@ -381,7 +381,7 @@ const maybeSendProposals = async () => {
     const hour = now.hour()
     const week = now.clone().startOf('week')
     const contexts = findContexts((context) => {
-      if (context.nextRestart) return (now > moment(context.nextRestart))
+      if (context.nextRestart) return (now > localMoment(context.nextRestart))
 
       if ((weekday > 3) || (hour < 12) || (hour > 18)) return false
       if (context.proposal && (week.diff(localMoment(context.proposal.when), 'days') <= 7)) {
