@@ -95,8 +95,8 @@ bot.command('setRestartDay', async (ctx) => {
     context.nextRestart = needTime.format()
     pushContext(context)
 
-    const successMessage = strings.nextRestartMessage.replace(/{{(.+)}}/, (match, format) => needTime.format(format))
-    await ctx.reply(successMessage)
+    const restartMessage = strings.nextRestartMessage.replace(/{{(.+)}}/, (match, format) => needTime.format(format))
+    await ctx.reply(restartMessage)
   } catch (err) {
     console.log('Error:', err.message)
   } finally {
