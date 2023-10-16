@@ -48,9 +48,9 @@ bot.command('stop', async (ctx) => {
  * Bot restart poll every week
  */
 bot.command('setRestartDay', async (ctx) => {
+  const context = pullContext(ctx.message.chat.id)
+  const release = await context.mutex.acquire()
   try {
-    const chatId = ctx.message.chat.id
-    const context = pullContext(chatId)
     const message = ctx.payload
 
     const daySettings = message.match(/^(.+) (\d{1,2}):(\d\d)$/)
@@ -95,26 +95,29 @@ bot.command('setRestartDay', async (ctx) => {
     }
 
     context.nextRestart = needTime.format()
-    await pushContext(context)
+    pushContext(context)
 
     const successMessage = strings.nextRestartMessage.replace(/{{(.+)}}/, (match, format) => needTime.format(format))
     await ctx.reply(successMessage)
   } catch (err) {
     console.log('Error:', err.message)
+  } finally {
+    release()
   }
 })
 
 bot.command('clearRestartDay', async (ctx) => {
+  const context = pullContext(ctx.message.chat.id)
+  const release = await context.mutex.acquire()
   try {
-    const chatId = ctx.message.chat.id
-    const context = pullContext(chatId)
-
     context.nextRestart = null
-    await pushContext(context)
+    pushContext(context)
 
     await ctx.reply(strings.clearRestartMessage)
   } catch (err) {
     console.log('Error:', err.message)
+  } finally {
+    release()
   }
 })
 
