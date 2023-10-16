@@ -49,6 +49,10 @@ bot.command('stop', async (ctx) => {
  */
 bot.command('setRestartDay', async (ctx) => {
   const context = pullContext(ctx.message.chat.id)
+  if (!context) {
+    console.log('Context not found')
+    return
+  }
   const release = await context.mutex.acquire()
   try {
     const message = ctx.payload
@@ -106,6 +110,10 @@ bot.command('setRestartDay', async (ctx) => {
 
 bot.command('clearRestartDay', async (ctx) => {
   const context = pullContext(ctx.message.chat.id)
+  if (!context) {
+    console.log('Context not found')
+    return
+  }
   const release = await context.mutex.acquire()
   try {
     context.nextRestart = null
