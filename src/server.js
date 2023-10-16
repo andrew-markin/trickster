@@ -361,7 +361,7 @@ const closeObsoleteProposals = async () => {
   const now = localMoment()
   const contexts = findContexts((context) => {
     if (!context?.proposal) return false
-    if (context.nextRestart && now > localMoment(context.nextRestart)) return true
+    if (context.nextRestart && (now > localMoment(context.nextRestart))) return true
     return now > localMoment(context.proposal.when).add(22, 'h')
   })
   for (const context of contexts) {
