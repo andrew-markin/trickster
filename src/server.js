@@ -23,7 +23,7 @@ bot.start(async (ctx) => {
       return
     }
     const salt = helpers.randomHex256()
-    await pushContext({ chatId, salt, sequence: 0, nextRestart: null })
+    await pushContext({ chatId, salt, sequence: 0 })
     await sendIntroduction({ chatId })
   } catch (err) {
     console.log('Error:', err.message)
@@ -53,7 +53,7 @@ bot.command('setRestartDay', async (ctx) => {
   try {
     const message = ctx.payload
 
-    const daySettings = message.match(/^(.+) (\d{1,2}):(\d\d)$/)
+    const daySettings = message.match(/^(?<weekDay>.+) (?<hour>\d{1,2}):(?<min>\d{2})$/)
     const timeExample = localMoment().weekday(0).hour(10).minute(15)
     const dayMustBeMessage = strings.dayMustBe + timeExample.format(' «ddd HH:mm»')
 
@@ -62,11 +62,9 @@ bot.command('setRestartDay', async (ctx) => {
       return
     }
 
-    let [, weekDay, hour, min] = daySettings
-
-    weekDay = weekDay.toLowerCase()
-    hour = parseInt(hour)
-    min = parseInt(min)
+    const weekDay = daySettings.groups.weekDay.toLowerCase()
+    const hour = parseInt(daySettings.groups.hour)
+    const min = parseInt(daySettings.groups.min)
 
     const weekdaysShort = moment.weekdaysShort().map((day) => day.toLowerCase())
 
