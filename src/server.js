@@ -76,9 +76,10 @@ bot.on('callback_query', async (ctx) => {
   try {
     if (data === 'propose') {
       const now = localMoment()
-      const week = now.isoWeekday() <= 5
-        ? now.clone().startOf('week')
-        : now.clone().endOf('week')
+      const fridayEvening = now.clone().startOf('isoWeek').add(4, 'days').add(18, 'hours')
+      const week = now < fridayEvening
+        ? now.clone().startOf('isoWeek') // Current week
+        : now.clone().endOf('isoWeek') // Next week
       const when = week.clone().add(4, 'days').add(12, 'hours') // Next friday
       if (context?.proposal?.when === when.format('YYYY-MM-DD')) {
         await ctx.answerCbQuery(helpers.pickRandomItem(strings.proposeExcessive))
@@ -339,14 +340,14 @@ const maybeSendProposals = async () => {
     const weekday = now.isoWeekday()
     const hour = now.hour()
     if ((weekday > 2) || (hour < 12) || (hour > 18)) return
-    const week = now.clone().startOf('week')
+    const week = now.clone().startOf('isoWeek')
     const contexts = findContexts((context) => {
       if (context.proposal) {
         // If the last proposal reached the quorum, then the next automatic proposal
         // should be delayed for three weeks, otherwise only for two weeks
         const quorumReached = (context.proposal.accepts || []).length +
                               (context.proposal.withGuests || []).length >= config.quorumSize
-        if (week.diff(localMoment(context.proposal.when), 'days') <= quorumReached ? 14 : 7) {
+        if (week.diff(localMoment(context.proposal.when), 'days') <= (quorumReached ? 14 : 7)) {
           return false
         }
       }
@@ -404,7 +405,7 @@ const start = async () => {
     execHeartbeat(true)
   } catch (err) {
     console.log('Error:', err.message)
-    return process.exit(1)
+    process.exit(1)
   }
 }
 
@@ -416,7 +417,7 @@ const shutdown = async () => {
     process.exit()
   } catch (err) {
     console.log('Error:', err.message)
-    return process.exit(1)
+    process.exit(1)
   }
 }
 
