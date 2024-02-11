@@ -77,9 +77,10 @@ bot.on('callback_query', async (ctx) => {
     if (data === 'propose') {
       const now = localMoment()
       const fridayEvening = now.clone().startOf('isoWeek').add(4, 'days').add(18, 'hours')
-      const week = now < fridayEvening
-        ? now.clone().startOf('isoWeek') // Current week
-        : now.clone().endOf('isoWeek') // Next week
+      const week =
+        now < fridayEvening
+          ? now.clone().startOf('isoWeek') // Current week
+          : now.clone().endOf('isoWeek') // Next week
       const when = week.clone().add(4, 'days').add(12, 'hours') // Next friday
       if (context?.proposal?.when === when.format('YYYY-MM-DD')) {
         await ctx.answerCbQuery(helpers.pickRandomItem(strings.proposeExcessive))
@@ -156,11 +157,7 @@ bot.on('callback_query', async (ctx) => {
 
 const getUserTitle = (user) => {
   if (!user) return strings.userUnknown
-  const {
-    first_name: firstName,
-    last_name: lastName,
-    username
-  } = user
+  const { first_name: firstName, last_name: lastName, username } = user
   const parts = []
   if (firstName) parts.push(firstName)
   if (lastName) parts.push(lastName)
@@ -182,38 +179,29 @@ const getProposalMessage = ({ proposal }) => {
   }
   const lines = [proposal.question]
   const acceptsTotal = accepts.length + withGuests.size
-  const acceptsCaptionSuffix = withGuests.size > 0 ? ` (${accepts.length} + ${withGuests.size})` : ''
+  const acceptsCaptionSuffix =
+    withGuests.size > 0 ? ` (${accepts.length} + ${withGuests.size})` : ''
   const acceptsCaption = `${acceptsTotal}${acceptsCaptionSuffix}`
   if (acceptsTotal >= config.quorumSize) {
-    lines.push(
-      '',
-      `${strings.accepts}: ${acceptsCaption}`,
-      ...getUserList(accepts)
-    )
+    lines.push('', `${strings.accepts}: ${acceptsCaption}`, ...getUserList(accepts))
     if (rejects.length > 0) {
-      lines.push(
-        '',
-        `${strings.rejects}: ${rejects.length}`,
-        ...getUserList(rejects)
-      )
+      lines.push('', `${strings.rejects}: ${rejects.length}`, ...getUserList(rejects))
     }
   } else {
-    lines.push(
-      '',
-      `${strings.accepts}: ${acceptsCaption}`,
-      `${strings.rejects}: ${rejects.length}`
-    )
+    lines.push('', `${strings.accepts}: ${acceptsCaption}`, `${strings.rejects}: ${rejects.length}`)
   }
   return {
     text: lines.join('\n'),
     extra: {
       parse_mode: 'Markdown',
-      ...!proposal.closed && Markup.inlineKeyboard([[
-        Markup.button.callback(strings.accept, 'accept'),
-        Markup.button.callback(strings.reject, 'reject')
-      ], [
-        Markup.button.callback(strings.withGuest, 'with-guest')
-      ]])
+      ...(!proposal.closed &&
+        Markup.inlineKeyboard([
+          [
+            Markup.button.callback(strings.accept, 'accept'),
+            Markup.button.callback(strings.reject, 'reject')
+          ],
+          [Markup.button.callback(strings.withGuest, 'with-guest')]
+        ]))
     }
   }
 }
@@ -222,9 +210,7 @@ const sendIntroduction = async ({ chatId }) => {
   await bot.telegram.sendMessage(chatId, strings.introduction, {
     disable_notification: helpers.nowIsNight(),
     parse_mode: 'Markdown',
-    ...Markup.inlineKeyboard([
-      Markup.button.callback(strings.proposeButton, 'propose')
-    ])
+    ...Markup.inlineKeyboard([Markup.button.callback(strings.proposeButton, 'propose')])
   })
 }
 
@@ -339,14 +325,15 @@ const maybeSendProposals = async () => {
     const now = localMoment()
     const weekday = now.isoWeekday()
     const hour = now.hour()
-    if ((weekday > 2) || (hour < 12) || (hour > 18)) return
+    if (weekday > 2 || hour < 12 || hour > 18) return
     const week = now.clone().startOf('isoWeek')
     const contexts = findContexts((context) => {
       if (context.proposal) {
         // If the last proposal reached the quorum, then the next automatic proposal
         // should be delayed for three weeks, otherwise only for two weeks
-        const quorumReached = (context.proposal.accepts || []).length +
-                              (context.proposal.withGuests || []).length >= config.quorumSize
+        const quorumReached =
+          (context.proposal.accepts || []).length + (context.proposal.withGuests || []).length >=
+          config.quorumSize
         if (week.diff(localMoment(context.proposal.when), 'days') <= (quorumReached ? 14 : 7)) {
           return false
         }
@@ -354,7 +341,10 @@ const maybeSendProposals = async () => {
       const nonce = helpers.getSha256(context.salt, week.format('YYYY-MM-DD'))
       const day = parseInt(nonce.substring(0, 4), 16) % 2
       const minute = parseInt(nonce.substring(4, 8), 16) % 300
-      const schedule = week.clone().add(day, 'days').add(720 + minute, 'minutes')
+      const schedule = week
+        .clone()
+        .add(day, 'days')
+        .add(720 + minute, 'minutes')
       return now > schedule
     })
     const when = week.clone().add(4, 'days').add(12, 'hours') // Next friday

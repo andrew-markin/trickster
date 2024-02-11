@@ -8,7 +8,7 @@ const localMoment = (...args) => {
 
 const nowIsNight = () => {
   const hour = localMoment().hour()
-  return (hour > 20) || (hour < 9)
+  return hour > 20 || hour < 9
 }
 
 const randomInt = (min, max) => {

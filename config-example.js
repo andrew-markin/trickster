@@ -9,23 +9,24 @@ module.exports = {
   quorumSize: 8, // Adjust this to your company size
   strings: {
     userUnknown: 'Unknown',
-    introduction: 'Hi, I\'m Trickster! Sometimes I\'ll invite you to hang out for a while and you can vote up or down. Voting will be secret until a quorum is reached (8 votes in favor), then open. What to do with the results - you decide! 😜',
+    introduction:
+      "Hi, I'm Trickster! Sometimes I'll invite you to hang out for a while and you can vote up or down. Voting will be secret until a quorum is reached (8 votes in favor), then open. What to do with the results - you decide! 😜",
     proposeButton: 'I want a party! 🥳',
     questions: [
-      '🍕 Let\'s hang out on Friday {{D MMMM}}?',
-      '🍕 Let\'s get together on Friday {{D MMMM}}?',
+      "🍕 Let's hang out on Friday {{D MMMM}}?",
+      "🍕 Let's get together on Friday {{D MMMM}}?",
       '🥳 How about we hang out on Friday ({{D MMMM}})?',
-      '🥳 Let\'s party hard on Friday ({{D MMMM}})?',
+      "🥳 Let's party hard on Friday ({{D MMMM}})?",
       '🎉 Maybe we can have a Friday party ({{D MMMM}})?',
       '🎉 Maybe we can meet on Friday ({{D MMMM}})?',
-      '🍷 Let\'s celebrate the end of the work week {{D MMMM}}?',
+      "🍷 Let's celebrate the end of the work week {{D MMMM}}?",
       '🍺 I suggest you get drunk on Friday {{D MMMM}}.',
       '🍺 I suggest drinking on Friday ({{D MMMM}}).'
       // TODO: Add more similar variants here
     ],
     proposeConfirmations: [
       '👍 Good!',
-      '👍 Let\'s try to arrange it!',
+      "👍 Let's try to arrange it!",
       '🙌 Great!',
       '🙂 Excellent!',
       '👍 Awesome!',
@@ -35,7 +36,8 @@ module.exports = {
     proposeExcessive: [
       '😁 Already offered!',
       '😎 Check your chat history!',
-      '😈 Already done!'
+      '😈 Already done!',
+      '🤔 Yeah, sure!'
     ],
     proposalNotifications: [
       '👆 Make your choice!',
@@ -57,9 +59,9 @@ module.exports = {
     ],
     rejectConfirmations: [
       '🔮 Maybe next time...',
-      '⏳ Maybe you\'ll change your mind...',
+      "⏳ Maybe you'll change your mind...",
       '🙄 Well, okay...',
-      '😔 It\'s a pity...'
+      "😔 It's a pity..."
     ]
   },
   animations: [
